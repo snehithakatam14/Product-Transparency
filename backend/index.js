@@ -8,25 +8,24 @@ const fs = require("fs");
 const path = require("path");
 
 const app = express();
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
 
 app.use(
   cors({
-    origin: "http://localhost:3000",
+    origin: ["http://localhost:3000", "https://your-frontend.vercel.app"],
     methods: ["GET", "POST", "PUT", "DELETE"],
   })
 );
+
 app.use(bodyParser.json());
 app.use(express.json());
 
+
 mongoose
-  .connect(
-    "mongodb+srv://admin:admin123@cluster0.jdjmjo5.mongodb.net/productDB?retryWrites=true&w=majority&appName=Cluster0",
-    {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    }
-  )
+  .connect(process.env.MONGO_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
   .then(() => console.log("✅ MongoDB connected successfully"))
   .catch((err) => console.error("❌ MongoDB connection error:", err));
 
@@ -77,7 +76,8 @@ app.put("/api/products/:id", async (req, res) => {
       { name, brand, price, description },
       { new: true }
     );
-    if (!updatedProduct) return res.status(404).json({ error: "Product not found" });
+    if (!updatedProduct)
+      return res.status(404).json({ error: "Product not found" });
     res.json({ message: "✅ Product updated", product: updatedProduct });
   } catch (error) {
     res.status(500).json({ error: "Failed to update product" });
