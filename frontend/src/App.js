@@ -53,7 +53,7 @@ export default function App() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post("http://localhost:5000/api/products", formData);
+      await axios.post("https://product-transparency-gbny.onrender.com/api/products", formData);
       alert("✅ Product added successfully!");
       setFormData({
         name: "",

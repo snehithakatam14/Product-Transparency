@@ -20,7 +20,7 @@ export default function ProductLists() {
 
   const fetchProducts = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/products");
+      const res = await axios.get("https://product-transparency-gbny.onrender.com/products");
       setProducts(res.data);
     } catch (error) {
       console.error("❌ Error fetching products:", error);
@@ -30,7 +30,7 @@ export default function ProductLists() {
   const deleteProduct = async (id) => {
     if (!window.confirm("Are you sure you want to delete this product?")) return;
     try {
-      await axios.delete(`http://localhost:5000/api/products/${id}`);
+      await axios.delete(`https://product-transparency-gbny.onrender.com/api/products/${id}`);
       alert("🗑️ Product deleted successfully!");
       fetchProducts();
     } catch (error) {
@@ -54,7 +54,7 @@ export default function ProductLists() {
 
   const saveUpdate = async (id) => {
     try {
-      await axios.put(`http://localhost:5000/api/products/${id}`, updatedData);
+      await axios.put(`https://product-transparency-gbny.onrender.com/api/products/${id}`, updatedData);
       alert("✅ Product updated!");
       setEditingProduct(null);
       fetchProducts();
