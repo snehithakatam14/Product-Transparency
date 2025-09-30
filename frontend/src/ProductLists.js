@@ -1,8 +1,10 @@
-import "./App.css";
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import Papa from "papaparse";
 import { saveAs } from "file-saver";
+import "./App.css";
+
+const API = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
 export default function ProductLists() {
   const [products, setProducts] = useState([]);
@@ -20,7 +22,7 @@ export default function ProductLists() {
 
   const fetchProducts = async () => {
     try {
-      const res = await axios.get("https://product-transparency-gbny.onrender.com/products");
+      const res = await axios.get(`${API}/products`);
       setProducts(res.data);
     } catch (error) {
       console.error("❌ Error fetching products:", error);
@@ -30,7 +32,7 @@ export default function ProductLists() {
   const deleteProduct = async (id) => {
     if (!window.confirm("Are you sure you want to delete this product?")) return;
     try {
-      await axios.delete(`https://product-transparency-gbny.onrender.com/api/products/${id}`);
+      await axios.delete(`${API}/api/products/${id}`);
       alert("🗑️ Product deleted successfully!");
       fetchProducts();
     } catch (error) {
@@ -54,7 +56,7 @@ export default function ProductLists() {
 
   const saveUpdate = async (id) => {
     try {
-      await axios.put(`https://product-transparency-gbny.onrender.com/api/products/${id}`, updatedData);
+      await axios.put(`${API}/api/products/${id}`, updatedData);
       alert("✅ Product updated!");
       setEditingProduct(null);
       fetchProducts();
@@ -63,27 +65,6 @@ export default function ProductLists() {
     }
   };
 
-  // 🧠 Fetch AI Score
-  const fetchAIScore = async (product) => {
-    try {
-      const response = await fetch("http://127.0.0.1:8000/transparency-score", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          description: product.description,
-          aiAnswers: {},
-        }),
-      });
-      const data = await response.json();
-      alert(`🤖 AI Transparency Score: ${data.transparency_score}`);
-    } catch (error) {
-      console.error("❌ Error fetching AI score:", error);
-    }
-  };
-
-  // 📤 Export all products as CSV
   const exportCSV = () => {
     const csvData = products.map((p) => ({
       Name: p.name,
@@ -97,73 +78,95 @@ export default function ProductLists() {
     saveAs(blob, "products_export.csv");
   };
 
+  const downloadReport = async (id, name) => {
+    try {
+      const resp = await fetch(`${API}/api/products/${id}/pdf`, {
+        method: "GET",
+      });
+      if (!resp.ok) {
+        const text = await resp.text();
+        throw new Error(`Failed to get PDF: ${resp.status} ${text}`);
+      }
+      const blob = await resp.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${name || "product"}-report.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("❌ Error downloading report:", error);
+      alert("❌ Failed to download report");
+    }
+  };
+
   return (
-    <div className="product-section">
-      <div className="header-bar">
-        <h2>📦 All Products</h2>
-        <button className="export-btn" onClick={exportCSV}>
-          📁 Export CSV
-        </button>
+    <div style={{ marginTop: "30px" }}>
+      <h2>📦 All Products</h2>
+      <div style={{ marginBottom: "10px" }}>
+        <button onClick={exportCSV} className="btn neon-btn">📁 Export as CSV</button>
       </div>
 
-      {products.length === 0 ? (
-        <p>No products found.</p>
-      ) : (
-        <div className="product-grid">
-          {products.map((p) => (
-            <div key={p._id} className="product-card">
-              {editingProduct === p._id ? (
-                <>
-                  <input
-                    type="text"
-                    name="name"
-                    value={updatedData.name}
-                    onChange={handleUpdateChange}
-                  />
-                  <input
-                    type="text"
-                    name="brand"
-                    value={updatedData.brand}
-                    onChange={handleUpdateChange}
-                  />
-                  <input
-                    type="number"
-                    name="price"
-                    value={updatedData.price}
-                    onChange={handleUpdateChange}
-                  />
-                  <textarea
-                    name="description"
-                    value={updatedData.description}
-                    onChange={handleUpdateChange}
-                  />
-                  <div className="button-row">
-                    <button onClick={() => saveUpdate(p._id)}>💾 Save</button>
-                    <button onClick={() => setEditingProduct(null)}>
-                      ❌ Cancel
-                    </button>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <h3>{p.name}</h3>
-                  <p>Brand: {p.brand}</p>
-                  <p>Price: ${p.price}</p>
-                  <p>{p.description}</p>
+      {products.length === 0 && <p>No products found.</p>}
 
-                  <div className="button-row">
-                    <button onClick={() => startEditing(p)}>✏️ Edit</button>
-                    <button onClick={() => deleteProduct(p._id)}>🗑️ Delete</button>
-                    <button onClick={() => fetchAIScore(p)}>
-                      🤖 Get AI Score
-                    </button>
-                  </div>
-                </>
-              )}
-            </div>
-          ))}
+      {products.map((p) => (
+        <div
+          key={p._id}
+          style={{
+            border: "1px solid rgba(255,255,255,0.06)",
+            padding: "18px",
+            margin: "12px 0",
+            borderRadius: "10px",
+            background: "rgba(255,255,255,0.02)"
+          }}
+        >
+          {editingProduct === p._id ? (
+            <>
+              <input
+                type="text"
+                name="name"
+                value={updatedData.name}
+                onChange={handleUpdateChange}
+              />
+              <input
+                type="text"
+                name="brand"
+                value={updatedData.brand}
+                onChange={handleUpdateChange}
+              />
+              <input
+                type="number"
+                name="price"
+                value={updatedData.price}
+                onChange={handleUpdateChange}
+              />
+              <textarea
+                name="description"
+                value={updatedData.description}
+                onChange={handleUpdateChange}
+              />
+              <br />
+              <button onClick={() => saveUpdate(p._id)} className="btn">💾 Save</button>
+              <button onClick={() => setEditingProduct(null)} className="btn">❌ Cancel</button>
+            </>
+          ) : (
+            <>
+              <h3 style={{ margin: "0 0 6px 0" }}>{p.name}</h3>
+              <p style={{ margin: 0 }}>Brand: {p.brand}</p>
+              <p style={{ margin: 0 }}>Price: ${p.price}</p>
+              <p style={{ marginTop: "8px" }}>{p.description}</p>
+
+              <div style={{ marginTop: "8px", display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                <button onClick={() => startEditing(p)} className="btn">✏️ Edit</button>
+                <button onClick={() => deleteProduct(p._id)} className="btn">🗑️ Delete</button>
+                <button onClick={() => downloadReport(p._id, p.name)} className="btn neon-btn">📄 Download Report</button>
+              </div>
+            </>
+          )}
         </div>
-      )}
+      ))}
     </div>
   );
 }
