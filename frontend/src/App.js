@@ -1,11 +1,9 @@
-import { addProduct } from "../services/api";
 import "./App.css";
 import React, { useState } from "react";
 import axios from "axios";
 import ProductLists from "./ProductLists";
+import API_BASE_URL from "./config";
 import "./index.css";
-
-const API = process.env.REACT_APP_API_URL || "https://product-transparency-gbny.onrender.com";
 
 export default function App() {
   const [step, setStep] = useState(1);
@@ -35,7 +33,7 @@ export default function App() {
     if (step === 2) {
       try {
         setLoadingQuestions(true);
-        const res = await axios.post(`${API}/generate-questions`, {
+        const res = await axios.post(`${API_BASE_URL}/generate-questions`, {
           name: formData.name,
           brand: formData.brand,
           price: formData.price,
@@ -56,7 +54,7 @@ export default function App() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post(`${API}/api/products`, formData);
+      await axios.post(`${API_BASE_URL}/api/products`, formData);
       alert("✅ Product added successfully!");
       setFormData({
         name: "",
@@ -68,7 +66,6 @@ export default function App() {
       setAiQuestions([]);
       setStep(1);
     } catch (error) {
-      console.error("❌ Failed to add product:", error);
       alert("❌ Failed to add product");
     }
   };
@@ -91,7 +88,9 @@ export default function App() {
               <input type="text" name="brand" value={formData.brand} onChange={handleChange} required />
 
               <div className="btn-row">
-                <button type="button" onClick={nextStep} className="btn next">Next ➡️</button>
+                <button type="button" onClick={nextStep} className="btn next">
+                  Next ➡️
+                </button>
               </div>
             </>
           )}
