@@ -5,31 +5,23 @@ import API_BASE_URL from "./config";
 export default function ProductLists() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [editingProduct, setEditingProduct] = useState(null); // for editing
-  const [formData, setFormData] = useState({
-    name: "",
-    brand: "",
-    price: "",
-    description: "",
-  });
 
-  // ✅ Fetch products from backend
+  // ✅ Fetch products
   useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const res = await axios.get(`${API_BASE_URL}/api/products`);
+        setProducts(res.data);
+      } catch (err) {
+        console.error("❌ Failed to load products:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
     fetchProducts();
   }, []);
 
-  const fetchProducts = async () => {
-    try {
-      const res = await axios.get(`${API_BASE_URL}/api/products`);
-      setProducts(res.data);
-    } catch (err) {
-      console.error("❌ Failed to load products:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // ✅ CSV Export
+  // ✅ Export CSV
   const exportCSV = () => {
     const headers = ["Name", "Brand", "Price", "Description"];
     const csvRows = [
@@ -47,7 +39,7 @@ export default function ProductLists() {
     a.click();
   };
 
-  // ✅ PDF Download
+  // ✅ Download PDF
   const downloadPDF = async () => {
     try {
       const res = await fetch(`${API_BASE_URL}/api/products/pdf`);
@@ -63,39 +55,28 @@ export default function ProductLists() {
     }
   };
 
-  // ✅ Delete a product
-  const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this product?")) return;
+  // ✅ Edit Product
+  const editProduct = async (id) => {
+    const newName = prompt("Enter new product name:");
+    if (!newName) return;
     try {
-      await axios.delete(`${API_BASE_URL}/api/products/${id}`);
-      fetchProducts(); // refresh list
-    } catch (error) {
-      console.error("❌ Failed to delete product:", error);
-      alert("Delete failed");
+      await axios.put(`${API_BASE_URL}/api/products/${id}`, { name: newName });
+      setProducts(products.map((p) => (p._id === id ? { ...p, name: newName } : p)));
+    } catch (err) {
+      console.error("❌ Failed to edit product:", err);
+      alert("Update failed");
     }
   };
 
-  // ✅ Start editing a product
-  const handleEdit = (product) => {
-    setEditingProduct(product._id);
-    setFormData({
-      name: product.name,
-      brand: product.brand,
-      price: product.price,
-      description: product.description,
-    });
-  };
-
-  // ✅ Save edited product
-  const handleSave = async () => {
+  // ✅ Delete Product
+  const deleteProduct = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this product?")) return;
     try {
-      await axios.put(`${API_BASE_URL}/api/products/${editingProduct}`, formData);
-      setEditingProduct(null);
-      setFormData({ name: "", brand: "", price: "", description: "" });
-      fetchProducts();
+      await axios.delete(`${API_BASE_URL}/api/products/${id}`);
+      setProducts(products.filter((p) => p._id !== id));
     } catch (err) {
-      console.error("❌ Failed to update product:", err);
-      alert("Update failed");
+      console.error("❌ Failed to delete product:", err);
+      alert("Delete failed");
     }
   };
 
@@ -106,82 +87,35 @@ export default function ProductLists() {
     <div className="product-list">
       <h2>📋 Product List</h2>
 
-      {/* ✅ Top Buttons */}
+      {/* ✅ CSV & PDF buttons */}
       <div style={{ marginBottom: "1rem" }}>
         <button onClick={exportCSV} style={{ marginRight: "10px" }}>
-          📤 Export as CSV
+          📤 Export CSV
         </button>
         <button onClick={downloadPDF}>📄 Download PDF</button>
       </div>
 
-      {/* ✅ Product Cards */}
+      {/* ✅ Product cards */}
       {products.map((p) => (
         <div key={p._id} className="product-card" style={{ marginBottom: "1rem" }}>
-          {editingProduct === p._id ? (
-            <>
-              <input
-                type="text"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="Name"
-              />
-              <input
-                type="text"
-                value={formData.brand}
-                onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
-                placeholder="Brand"
-              />
-              <input
-                type="text"
-                value={formData.price}
-                onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                placeholder="Price"
-              />
-              <textarea
-                value={formData.description}
-                onChange={(e) =>
-                  setFormData({ ...formData, description: e.target.value })
-                }
-                placeholder="Description"
-              />
-              <button onClick={handleSave} style={{ marginRight: "8px" }}>
-                💾 Save
-              </button>
-              <button onClick={() => setEditingProduct(null)}>❌ Cancel</button>
-            </>
-          ) : (
-            <>
-              <h3>{p.name}</h3>
-              <p><strong>Brand:</strong> {p.brand}</p>
-              <p><strong>Price:</strong> ₹{p.price}</p>
-              <p><strong>Description:</strong> {p.description}</p>
+          <h3>{p.name}</h3>
+          <p>
+            <strong>Brand:</strong> {p.brand}
+          </p>
+          <p>
+            <strong>Price:</strong> ₹{p.price}
+          </p>
+          <p>
+            <strong>Description:</strong> {p.description}
+          </p>
 
-              {/* ✅ Action Buttons */}
-              <button
-                onClick={() => handleEdit(p)}
-                style={{
-                  background: "#3b82f6",
-                  color: "white",
-                  padding: "5px 10px",
-                  marginRight: "8px",
-                  borderRadius: "5px",
-                }}
-              >
-                ✏️ Edit
-              </button>
-              <button
-                onClick={() => handleDelete(p._id)}
-                style={{
-                  background: "#ef4444",
-                  color: "white",
-                  padding: "5px 10px",
-                  borderRadius: "5px",
-                }}
-              >
-                🗑️ Delete
-              </button>
-            </>
-          )}
+          <button onClick={() => editProduct(p._id)}>✏️ Edit</button>
+          <button
+            onClick={() => deleteProduct(p._id)}
+            style={{ marginLeft: "8px", color: "white", background: "red" }}
+          >
+            🗑️ Delete
+          </button>
         </div>
       ))}
     </div>
