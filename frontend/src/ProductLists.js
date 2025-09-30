@@ -20,15 +20,17 @@ export default function ProductLists() {
     fetchProducts();
   }, []);
 
+  // ✅ Fetch all products
   const fetchProducts = async () => {
     try {
-      const res = await axios.get(`${API}/products`);
+      const res = await axios.get(`${API}/api/products`);
       setProducts(res.data);
     } catch (error) {
       console.error("❌ Error fetching products:", error);
     }
   };
 
+  // ✅ Delete a product
   const deleteProduct = async (id) => {
     if (!window.confirm("Are you sure you want to delete this product?")) return;
     try {
@@ -40,6 +42,7 @@ export default function ProductLists() {
     }
   };
 
+  // ✅ Start editing a product
   const startEditing = (product) => {
     setEditingProduct(product._id);
     setUpdatedData({
@@ -50,10 +53,12 @@ export default function ProductLists() {
     });
   };
 
+  // ✅ Update input changes while editing
   const handleUpdateChange = (e) => {
     setUpdatedData({ ...updatedData, [e.target.name]: e.target.value });
   };
 
+  // ✅ Save the updated product
   const saveUpdate = async (id) => {
     try {
       await axios.put(`${API}/api/products/${id}`, updatedData);
@@ -65,6 +70,7 @@ export default function ProductLists() {
     }
   };
 
+  // ✅ Export all products as CSV
   const exportCSV = () => {
     const csvData = products.map((p) => ({
       Name: p.name,
@@ -78,11 +84,10 @@ export default function ProductLists() {
     saveAs(blob, "products_export.csv");
   };
 
+  // ✅ Download PDF report for a product
   const downloadReport = async (id, name) => {
     try {
-      const resp = await fetch(`${API}/api/products/${id}/pdf`, {
-        method: "GET",
-      });
+      const resp = await fetch(`${API}/api/products/${id}/pdf`, { method: "GET" });
       if (!resp.ok) {
         const text = await resp.text();
         throw new Error(`Failed to get PDF: ${resp.status} ${text}`);
@@ -124,29 +129,10 @@ export default function ProductLists() {
         >
           {editingProduct === p._id ? (
             <>
-              <input
-                type="text"
-                name="name"
-                value={updatedData.name}
-                onChange={handleUpdateChange}
-              />
-              <input
-                type="text"
-                name="brand"
-                value={updatedData.brand}
-                onChange={handleUpdateChange}
-              />
-              <input
-                type="number"
-                name="price"
-                value={updatedData.price}
-                onChange={handleUpdateChange}
-              />
-              <textarea
-                name="description"
-                value={updatedData.description}
-                onChange={handleUpdateChange}
-              />
+              <input type="text" name="name" value={updatedData.name} onChange={handleUpdateChange} />
+              <input type="text" name="brand" value={updatedData.brand} onChange={handleUpdateChange} />
+              <input type="number" name="price" value={updatedData.price} onChange={handleUpdateChange} />
+              <textarea name="description" value={updatedData.description} onChange={handleUpdateChange} />
               <br />
               <button onClick={() => saveUpdate(p._id)} className="btn">💾 Save</button>
               <button onClick={() => setEditingProduct(null)} className="btn">❌ Cancel</button>
