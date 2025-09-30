@@ -4,7 +4,7 @@ import Papa from "papaparse";
 import { saveAs } from "file-saver";
 import "./App.css";
 
-const API = process.env.REACT_APP_API_URL || "http://localhost:5000";
+const API = process.env.REACT_APP_API_URL || "https://product-transparency-gbny.onrender.com";
 
 export default function ProductLists() {
   const [products, setProducts] = useState([]);
