@@ -32,7 +32,7 @@ export default function App() {
     if (step === 2) {
       try {
         setLoadingQuestions(true);
-        const res = await axios.post("http://localhost:8000/generate-questions", {
+        const res = await axios.post("https://product-transparency-gbny.onrender.com/generate-questions", {
           name: formData.name,
           brand: formData.brand,
           price: formData.price,
